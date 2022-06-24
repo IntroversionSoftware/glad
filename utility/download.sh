@@ -1,45 +1,39 @@
 #!/usr/bin/env bash
 
-set -e
+set -exo pipefail
 
+TARGET=${TARGET:=glad/files}
 
-TARGET=${TARGET:="."}
+download_file() {
+	rm -f "$1"
+	wget --quiet --show-progress -O "$1" "$2"
+}
 
+download_file "${TARGET}/egl.xml" https://raw.githubusercontent.com/KhronosGroup/EGL-Registry/main/api/egl.xml
+download_file "${TARGET}/egl_angle_ext.xml" https://raw.githubusercontent.com/google/angle/main/scripts/egl_angle_ext.xml
 
-rm -f "${TARGET}/egl.xml"
-wget -O "${TARGET}/egl.xml" https://raw.githubusercontent.com/KhronosGroup/EGL-Registry/main/api/egl.xml
+download_file "${TARGET}/gl.xml" https://raw.githubusercontent.com/KhronosGroup/OpenGL-Registry/main/xml/gl.xml
+download_file "${TARGET}/gl_angle_ext.xml" https://raw.githubusercontent.com/google/angle/main/scripts/gl_angle_ext.xml
 
-rm -f "${TARGET}/gl.xml"
-wget -O "${TARGET}/gl.xml" https://raw.githubusercontent.com/KhronosGroup/OpenGL-Registry/main/xml/gl.xml
+# These extensions are GLSL-only, so they don't end up in the Khronos XML
+download_file "${TARGET}/glsl_exts.xml" 'https://www.uplinklabs.net/glsl_exts.xml'
 
-rm -f "${TARGET}/glx.xml"
-wget -O "${TARGET}/glx.xml" https://raw.githubusercontent.com/KhronosGroup/OpenGL-Registry/main/xml/glx.xml
+download_file "${TARGET}/glx.xml" https://raw.githubusercontent.com/KhronosGroup/OpenGL-Registry/main/xml/glx.xml
 
-rm -f "${TARGET}/wgl.xml"
-wget -O "${TARGET}/wgl.xml" https://raw.githubusercontent.com/KhronosGroup/OpenGL-Registry/main/xml/wgl.xml
+download_file "${TARGET}/wgl.xml" https://raw.githubusercontent.com/KhronosGroup/OpenGL-Registry/main/xml/wgl.xml
 
-rm -f "${TARGET}/vk.xml"
-wget -O "${TARGET}/vk.xml" https://raw.githubusercontent.com/KhronosGroup/Vulkan-Docs/main/xml/vk.xml
+download_file "${TARGET}/vk.xml" https://raw.githubusercontent.com/KhronosGroup/Vulkan-Docs/main/xml/vk.xml
 
-rm -f "${TARGET}/khrplatform.h"
-wget -O "${TARGET}/khrplatform.h" https://raw.githubusercontent.com/KhronosGroup/EGL-Registry/main/api/KHR/khrplatform.h
+download_file "${TARGET}/khrplatform.h" https://raw.githubusercontent.com/KhronosGroup/EGL-Registry/main/api/KHR/khrplatform.h
 
-rm -f "${TARGET}/eglplatform.h"
-wget -O "${TARGET}/eglplatform.h" https://raw.githubusercontent.com/KhronosGroup/EGL-Registry/main/api/EGL/eglplatform.h
+download_file "${TARGET}/eglplatform.h" https://raw.githubusercontent.com/KhronosGroup/EGL-Registry/main/api/EGL/eglplatform.h
 
-rm -f "${TARGET}/vk_platform.h"
-wget -O "${TARGET}/vk_platform.h" https://raw.githubusercontent.com/KhronosGroup/Vulkan-Docs/main/include/vulkan/vk_platform.h
+download_file "${TARGET}/vk_platform.h" https://raw.githubusercontent.com/KhronosGroup/Vulkan-Docs/main/include/vulkan/vk_platform.h
 
-rm -f "${TARGET}/vulkan_video_codec_h264std.h"
-wget -O "${TARGET}/vulkan_video_codec_h264std.h" https://raw.githubusercontent.com/KhronosGroup/Vulkan-Headers/main/include/vk_video/vulkan_video_codec_h264std.h
-rm -f "${TARGET}/vulkan_video_codec_h264std_decode.h"
-wget -O "${TARGET}/vulkan_video_codec_h264std_decode.h" https://raw.githubusercontent.com/KhronosGroup/Vulkan-Headers/main/include/vk_video/vulkan_video_codec_h264std_decode.h
-rm -f "${TARGET}/vulkan_video_codec_h264std_encode.h"
-wget -O "${TARGET}/vulkan_video_codec_h264std_encode.h" https://raw.githubusercontent.com/KhronosGroup/Vulkan-Headers/main/include/vk_video/vulkan_video_codec_h264std_decode.h
+download_file "${TARGET}/vulkan_video_codec_h264std.h" https://raw.githubusercontent.com/KhronosGroup/Vulkan-Headers/main/include/vk_video/vulkan_video_codec_h264std.h
+download_file "${TARGET}/vulkan_video_codec_h264std_decode.h" https://raw.githubusercontent.com/KhronosGroup/Vulkan-Headers/main/include/vk_video/vulkan_video_codec_h264std_encode.h
+download_file "${TARGET}/vulkan_video_codec_h264std_encode.h" https://raw.githubusercontent.com/KhronosGroup/Vulkan-Headers/main/include/vk_video/vulkan_video_codec_h264std_decode.h
 
-rm -f "${TARGET}/vulkan_video_codec_h265std.h"
-wget -O "${TARGET}/vulkan_video_codec_h265std.h" https://raw.githubusercontent.com/KhronosGroup/Vulkan-Headers/main/include/vk_video/vulkan_video_codec_h265std.h
-rm -f "${TARGET}/vulkan_video_codec_h265std_decode.h"
-wget -O "${TARGET}/vulkan_video_codec_h265std_decode.h" https://raw.githubusercontent.com/KhronosGroup/Vulkan-Headers/main/include/vk_video/vulkan_video_codec_h265std_decode.h
-rm -f "${TARGET}/vulkan_video_codec_h265std_encode.h"
-wget -O "${TARGET}/vulkan_video_codec_h265std_encode.h" https://raw.githubusercontent.com/KhronosGroup/Vulkan-Headers/main/include/vk_video/vulkan_video_codec_h265std_decode.h
+download_file "${TARGET}/vulkan_video_codec_h265std.h" https://raw.githubusercontent.com/KhronosGroup/Vulkan-Headers/main/include/vk_video/vulkan_video_codec_h265std.h
+download_file "${TARGET}/vulkan_video_codec_h265std_decode.h" https://raw.githubusercontent.com/KhronosGroup/Vulkan-Headers/main/include/vk_video/vulkan_video_codec_h265std_encode.h
+download_file "${TARGET}/vulkan_video_codec_h265std_encode.h" https://raw.githubusercontent.com/KhronosGroup/Vulkan-Headers/main/include/vk_video/vulkan_video_codec_h265std_decode.h
