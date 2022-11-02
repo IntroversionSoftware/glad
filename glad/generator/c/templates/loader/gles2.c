@@ -38,7 +38,7 @@ static GLADapiproc glad_gles2_get_proc(void *vuserptr, const char* name) {
 }
 
 {% if not options.mx %}
-static void* {{ template_utils.handle() }} = NULL;
+static void* {{ template_utils.handle('ES2') }} = NULL;
 {% endif %}
 
 static void* glad_gles2_dlopen_handle({{ template_utils.context_arg(def='void') }}) {
@@ -55,11 +55,11 @@ static void* glad_gles2_dlopen_handle({{ template_utils.context_arg(def='void') 
     GLAD_UNUSED(glad_get_dlopen_handle);
     return NULL;
 #else
-    if ({{ template_utils.handle() }} == NULL) {
-        {{ template_utils.handle() }} = glad_get_dlopen_handle(NAMES, sizeof(NAMES) / sizeof(NAMES[0]));
+    if ({{ template_utils.handle('ES2') }} == NULL) {
+        {{ template_utils.handle('ES2') }} = glad_get_dlopen_handle(NAMES, sizeof(NAMES) / sizeof(NAMES[0]));
     }
 
-    return {{ template_utils.handle() }};
+    return {{ template_utils.handle('ES2') }};
 #endif
 }
 
@@ -94,7 +94,7 @@ int gladLoaderLoadGLES2{{ 'Context' if options.mx }}({{ template_utils.context_a
         return 0;
     }
 
-    did_load = {{ template_utils.handle() }} == NULL;
+    did_load = {{ template_utils.handle('ES2') }} == NULL;
     handle = glad_gles2_dlopen_handle({{ 'context' if options.mx }});
     if (handle != NULL) {
         userptr = glad_gles2_build_userptr(handle);
@@ -157,9 +157,9 @@ int gladLoaderLoadGLES2(void) {
 {% endif %}
 
 void gladLoaderUnloadGLES2{{ 'Context' if options.mx }}({{ template_utils.context_arg(def='void') }}) {
-    if ({{ template_utils.handle() }} != NULL) {
-        glad_close_dlopen_handle({{ template_utils.handle() }});
-        {{ template_utils.handle() }} = NULL;
+    if ({{ template_utils.handle('ES2') }} != NULL) {
+        glad_close_dlopen_handle({{ template_utils.handle('ES2') }});
+        {{ template_utils.handle('ES2') }} = NULL;
 {% if options.on_demand %}
         glad_gles2_internal_loader_global_userptr.get_proc_address_ptr = NULL;
 {% endif %}
