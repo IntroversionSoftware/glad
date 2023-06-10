@@ -4,9 +4,20 @@ set -exo pipefail
 
 TARGET=${TARGET:=glad/files}
 
+if type -P curl >/dev/null; then
+	DOWNLOAD_COMMAND="curl -L -o"
+fi
+if type -P wget >/dev/null;then
+	DOWNLOAD_COMMAND="wget --quiet --show-progress -O"
+fi
+if [[ -z "$DOWNLOAD_COMMAND" ]]; then
+	echo "Couldn't find curl or wget, can't continue"
+	exit 1
+fi
+
 download_file() {
 	rm -f "$1"
-	wget --quiet --show-progress -O "$1" "$2"
+	${DOWNLOAD_COMMAND} "$1" "$2"
 }
 
 download_file "${TARGET}/egl.xml" https://raw.githubusercontent.com/KhronosGroup/EGL-Registry/main/api/egl.xml
