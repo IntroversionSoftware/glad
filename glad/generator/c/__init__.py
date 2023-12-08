@@ -271,6 +271,11 @@ class CGenerator(JinjaGenerator):
             'https://raw.githubusercontent.com/KhronosGroup/Vulkan-Headers/main/include/vulkan/vk_platform.h'
         ),
         Header(
+            'vk_video/vulkan_video_codecs_common.h',
+            'vk_video/vulkan_video_codecs_common.h',
+            'https://raw.githubusercontent.com/KhronosGroup/Vulkan-Headers/main/include/vk_video/vulkan_video_codecs_common.h'
+        ),
+        Header(
             'vk_video/vulkan_video_codec_h264std.h',
             'vk_video/vulkan_video_codec_h264std.h',
             'https://raw.githubusercontent.com/KhronosGroup/Vulkan-Headers/main/include/vk_video/vulkan_video_codec_h264std.h'
@@ -480,8 +485,8 @@ class CGenerator(JinjaGenerator):
             return
 
         for header in self.ADDITIONAL_HEADERS:
-            if header.name not in feature_set.types:
-                continue
+            #if header.name not in feature_set.types:
+            #    continue
 
             path = os.path.join(self.path, 'include/{}'.format(header.include))
 

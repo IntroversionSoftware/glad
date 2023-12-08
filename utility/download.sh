@@ -41,6 +41,8 @@ download_file "${TARGET}/eglplatform.h" https://raw.githubusercontent.com/Khrono
 
 download_file "${TARGET}/vk_platform.h" https://raw.githubusercontent.com/KhronosGroup/Vulkan-Docs/main/include/vulkan/vk_platform.h
 
+download_file "${TARGET}/vulkan_video_codecs_common.h" https://raw.githubusercontent.com/KhronosGroup/Vulkan-Headers/main/include/vk_video/vulkan_video_codecs_common.h
+
 download_file "${TARGET}/vulkan_video_codec_h264std.h" https://raw.githubusercontent.com/KhronosGroup/Vulkan-Headers/main/include/vk_video/vulkan_video_codec_h264std.h
 download_file "${TARGET}/vulkan_video_codec_h264std_decode.h" https://raw.githubusercontent.com/KhronosGroup/Vulkan-Headers/main/include/vk_video/vulkan_video_codec_h264std_encode.h
 download_file "${TARGET}/vulkan_video_codec_h264std_encode.h" https://raw.githubusercontent.com/KhronosGroup/Vulkan-Headers/main/include/vk_video/vulkan_video_codec_h264std_decode.h
