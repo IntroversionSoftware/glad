@@ -58,11 +58,15 @@ static int glad_egl_find_extensions_{{ api|lower }}({{ template_utils.context_ar
     char *extensions;
     if (!glad_egl_get_extensions({{'context, ' if options.mx }}display, &extensions)) return 0;
 
+    static uint16_t extIdx[] = {
 {% for extension in feature_set.extensions %}
-    {{ ('GLAD_' + extension.name)|ctx(name_only=True) }} = glad_egl_has_extension(extensions, "{{ extension.name }}");
-{% else %}
-    GLAD_UNUSED(glad_egl_has_extension);
+        {{ "{:>6}".format(extension.index) }}, // {{ extension.name }}
 {% endfor %}
+        0xFFFF
+    };
+
+    for (uint32_t i = 0; i < GLAD_ARRAYSIZE(extIdx) - 1; ++i)
+        context->extArray[extIdx[i]] = glad_egl_has_extension(extensions, glad_ext_names[extIdx[i]]);
 
     free(extensions);
 

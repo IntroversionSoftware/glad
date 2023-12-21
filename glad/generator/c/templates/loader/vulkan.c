@@ -17,7 +17,7 @@ static int glad_vulkan_is_device_function(const char *name) {
      * `vkGetDeviceProcAddr` does not return NULL for non-device functions.
      */
     int i;
-    int length = sizeof(DEVICE_FUNCTIONS) / sizeof(DEVICE_FUNCTIONS[0]);
+    int length = GLAD_ARRAYSIZE(DEVICE_FUNCTIONS);
 
     for (i=0; i < length; ++i) {
         if (strcmp(DEVICE_FUNCTIONS[i], name) == 0) {
@@ -75,7 +75,7 @@ static void* glad_vulkan_dlopen_handle({{ template_utils.context_arg(def='void')
     };
 
     if ({{ template_utils.handle() }} == NULL) {
-        {{ template_utils.handle() }} = glad_get_dlopen_handle(NAMES, sizeof(NAMES) / sizeof(NAMES[0]));
+        {{ template_utils.handle() }} = glad_get_dlopen_handle(NAMES, GLAD_ARRAYSIZE(NAMES));
     }
 
     return {{ template_utils.handle() }};

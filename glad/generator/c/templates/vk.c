@@ -130,11 +130,15 @@ static int glad_vk_find_extensions_{{ api|lower }}({{ template_utils.context_arg
     char **extensions = NULL;
     if (!glad_vk_get_extensions({{'context, ' if options.mx }}physical_device, &extension_count, &extensions)) return 0;
 
+    static uint16_t extIdx[] = {
 {% for extension in feature_set.extensions %}
-{% call template_utils.protect(extension) %}
-    {{ ('GLAD_' + extension.name)|ctx(name_only=True) }} = glad_vk_has_extension("{{ extension.name }}", extension_count, extensions);
-{% endcall %}
+        {{ "{:>6}".format(extension.index) }}, // {{ extension.name }}
 {% endfor %}
+        0xFFFF
+    };
+
+    for (uint32_t i = 0; i < GLAD_ARRAYSIZE(extIdx) - 1; ++i)
+        context->extArray[extIdx[i]] = glad_vk_has_extension(glad_ext_names[extIdx[i]], extension_count, extensions);
 
     {# Special case: only one extension which is protected -> unused at compile time only on some platforms #}
     GLAD_UNUSED(glad_vk_has_extension);

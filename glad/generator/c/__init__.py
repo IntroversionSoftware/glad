@@ -359,9 +359,9 @@ class CGenerator(JinjaGenerator):
         args = JinjaGenerator.get_template_arguments(self, spec, feature_set, config)
 
         # TODO allow MX for every specification/api
-        if spec.name not in (EGL.NAME, VK.NAME, GL.NAME):
-            args['options']['mx'] = False
-            args['options']['mx_global'] = False
+        #if spec.name not in (EGL.NAME, VK.NAME, GL.NAME):
+        #    args['options']['mx'] = False
+        #    args['options']['mx_global'] = False
 
         args.update(
             aliases=collect_alias_information(feature_set.commands),

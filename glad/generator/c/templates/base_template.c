@@ -4,6 +4,7 @@
  */
 {% block includes %}
 #include <stdio.h>
+#include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
 {% if not options.header_only %}
@@ -20,6 +21,27 @@
 #ifdef __cplusplus
 extern "C" {
 #endif
+
+#define GLAD_ARRAYSIZE(x) (sizeof(x)/sizeof(x[0]))
+
+typedef struct {
+    uint16_t first;
+    uint16_t second;
+} GladAliasPair_t;
+
+static const char *glad_pfn_names[] = {
+{% for command in feature_set.commands %}
+{% call template_utils.protect_name(command) %}
+    "{{ command.name }}"{% if not loop.last %},{% endif %} // {{ command.index }}
+{% endcall %}
+{% endfor %}
+};
+
+static const char *glad_ext_names[] = {
+{% for extension in feature_set.extensions %}
+    "{{ extension.name }}"{% if not loop.last %},{% endif %} // {{ extension.index }}
+{% endfor %}
+};
 
 {% set global_context = 'glad_' + feature_set.name + '_context' -%}
 {% block variables %}
@@ -133,9 +155,15 @@ static {{ command.proto.ret|type_to_c }} GLAD_API_PTR glad_debug_impl_{{ command
 {% call template_utils.protect(extension) %}
 static void glad_{{ spec.name }}_load_{{ extension.name }}({{ template_utils.context_arg(',') }} GLADuserptrloadfunc load, void* userptr) {
     if(!{{ ('GLAD_' + extension.name)|ctx(name_only=True) }}) return;
+    static const uint16_t s_pfnIdx[] = {
 {% for command in commands %}
-    {{ command.name|ctx }} = ({{ command.name|pfn }}) load(userptr, "{{ command.name }}");
+        {{ "{:>5}".format(command.index) }}{% if not loop.last %},{% else %} {% endif %} // {{ command.name }}
 {% endfor %}
+    };
+    for (uint32_t i = 0; i < GLAD_ARRAYSIZE(s_pfnIdx); ++i) {
+        const uint16_t pfnIdx = s_pfnIdx[i];
+        context->pfnArray[pfnIdx] = load(userptr, GLAD_{{ feature_set.name|api}}_fn_names[pfnIdx]);
+    }
 }
 
 {% endcall %}
@@ -144,15 +172,29 @@ static void glad_{{ spec.name }}_load_{{ extension.name }}({{ template_utils.con
 {% block aliasing %}
 {% if options.alias %}
 static void glad_{{ spec.name }}_resolve_aliases({{ template_utils.context_arg(def='void') }}) {
+    static const GladAliasPair_t s_aliases[] = {
 {% for command in feature_set.commands|sort(attribute='name') %}
+{% if aliases.get(command.name, [])|length > 0 %}
 {% call template_utils.protect(command) %}
-{% for alias in aliases.get(command.name, [])|reject('equalto', command.name) %}
+{% for alias in aliases.get(command.name, [])|reject('equalto', (command.name, command.index)) %}
 {% call template_utils.protect(alias) %}
-    if ({{ command.name|ctx }} == NULL && {{ alias|ctx }} != NULL) {{ command.name|ctx }} = ({{ command.name|pfn }}){{ alias|ctx }};
+        {{ "{" }}{{ "{:>5}".format(command.index) }}, {{ "{:>5}".format(alias[1]) }} }, // {{ command.name }} and {{ alias[0] }}
 {% endcall %}
 {% endfor %}
 {% endcall %}
+{% endif %}
 {% endfor %}
+        { 0xFFFF, 0xFFFF }
+    };
+
+    void **pfnArray = context->pfnArray;
+
+    for (uint32_t i = 0; i < GLAD_ARRAYSIZE(s_aliases) - 1; ++i) {
+        const GladAliasPair_t *pAlias = &s_aliases[i];
+        if (pfnArray[pAlias->first] == NULL && pfnArray[pAlias->second] != NULL) {
+            pfnArray[pAlias->first] = pfnArray[pAlias->second];
+        }
+    }
 }
 {% endif %}
 {% endblock %}
