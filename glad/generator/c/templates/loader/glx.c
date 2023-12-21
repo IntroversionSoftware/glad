@@ -20,7 +20,7 @@ static void* glad_glx_dlopen_handle(void) {
     };
 
     if (_glx_handle == NULL) {
-        _glx_handle = glad_get_dlopen_handle(NAMES, sizeof(NAMES) / sizeof(NAMES[0]));
+        _glx_handle = glad_get_dlopen_handle(NAMES, GLAD_ARRAYSIZE(NAMES));
     }
 
     return _glx_handle;
@@ -69,6 +69,34 @@ void gladLoaderUnloadGLX() {
         glad_glx_internal_loader_global_userptr = NULL;
 {% endif %}
     }
+}
+
+{% if options.mx_global %}
+void gladLoaderResetGLX(void) {
+    gladLoaderResetGLXContext(gladGetGLXContext());
+}
+{% endif %}
+
+void gladLoaderResetGLX{{ 'Context' if options.mx }}({{ template_utils.context_arg(def='void') }}) {
+{% if options.mx %}
+    memset(context, 0, sizeof(GladGLXContext));
+{% else %}
+{% if not options.on_demand %}
+{% for feature in feature_set.features %}
+    GLAD_{{ feature.name }} = 0;
+{% endfor %}
+
+{% for extension in feature_set.extensions %}
+    GLAD_{{ extension.name }} = 0;
+{% endfor %}
+{% endif %}
+
+{% for extension, commands in loadable() %}
+{% for command in commands %}
+    {{ command.name|ctx }} = NULL;
+{% endfor %}
+{% endfor %}
+{% endif %}
 }
 
 #endif /* GLAD_GLX */

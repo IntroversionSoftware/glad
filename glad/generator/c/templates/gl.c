@@ -87,6 +87,7 @@ static int glad_gl_get_extensions({{ template_utils.context_arg(',') }} int vers
 #endif
     return 1;
 }
+
 static void glad_gl_free_extensions(char **exts_i, unsigned int num_exts_i) {
     if (exts_i != NULL) {
         unsigned int index;
@@ -97,6 +98,7 @@ static void glad_gl_free_extensions(char **exts_i, unsigned int num_exts_i) {
         exts_i = NULL;
     }
 }
+
 static int glad_gl_has_extension(int version, const char *exts, unsigned int num_exts_i, char **exts_i, const char *ext) {
     if(GLAD_VERSION_MAJOR(version) < 3 || !GLAD_GL_IS_SOME_NEW_VERSION) {
         const char *extensions;
@@ -136,16 +138,28 @@ static GLADapiproc glad_gl_get_proc_from_userptr(void *userptr, const char* name
 
 {% for api in feature_set.info.apis %}
 static int glad_gl_find_extensions_{{ api|lower }}({{ template_utils.context_arg(',') }} int version) {
+{% if not loadable(feature_set.extensions, api=api)|index_consecutive_0_to_N %}
+    static uint16_t extIdx[] = {
+{% for extension, _ in loadable(feature_set.extensions, api=api) %}
+        {{ "{:>4}".format(extension.index) }}, /* {{ extension.name }} */
+{% endfor %}
+        0xFFFF
+    };
+{% endif %}
     const char *exts = NULL;
     unsigned int num_exts_i = 0;
     char **exts_i = NULL;
+    uint32_t i;
     if (!glad_gl_get_extensions({{ 'context, ' if options.mx }}version, &exts, &num_exts_i, &exts_i)) return 0;
 
-{% for extension in feature_set.extensions|select('supports', api) %}
-    {{ ('GLAD_' + extension.name)|ctx(name_only=True) }} = glad_gl_has_extension(version, exts, num_exts_i, exts_i, "{{ extension.name }}");
+{# If the list is a consecutive 0 to N list, we can just scan the whole thing without emitting an array. #}
+{% if loadable(feature_set.extensions, api=api)|index_consecutive_0_to_N %}
+    for (i = 0; i < GLAD_ARRAYSIZE(GLAD_{{ feature_set.name|api }}_ext_names); ++i)
+        context->extArray[i] = glad_gl_has_extension(version, exts, num_exts_i, exts_i, GLAD_{{ feature_set.name|api }}_ext_names[i]);
 {% else %}
-    GLAD_UNUSED(glad_gl_has_extension);
-{% endfor %}
+    for (i = 0; i < GLAD_ARRAYSIZE(extIdx) - 1; ++i)
+        context->extArray[extIdx[i]] = glad_gl_has_extension(version, exts, num_exts_i, exts_i, GLAD_{{ feature_set.name|api }}_ext_names[extIdx[i]]);
+{% endif %}
 
     glad_gl_free_extensions(exts_i, num_exts_i);
 

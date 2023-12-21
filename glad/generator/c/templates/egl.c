@@ -55,14 +55,27 @@ static GLADapiproc glad_egl_get_proc_from_userptr(void *userptr, const char *nam
 
 {% for api in feature_set.info.apis %}
 static int glad_egl_find_extensions_{{ api|lower }}({{ template_utils.context_arg(', ') }}EGLDisplay display) {
+{% if not feature_set.extensions|index_consecutive_0_to_N %}
+    static uint16_t extIdx[] = {
+{% for extension in feature_set.extensions %}
+        {{ "{:>4}".format(extension.index) }}, /* {{ extension.name }} */
+{% endfor %}
+        0xFFFF
+    };
+{% endif %}
     char *extensions;
+    uint32_t i;
+
     if (!glad_egl_get_extensions({{'context, ' if options.mx }}display, &extensions)) return 0;
 
-{% for extension in feature_set.extensions %}
-    {{ ('GLAD_' + extension.name)|ctx(name_only=True) }} = glad_egl_has_extension(extensions, "{{ extension.name }}");
+{# If the list is a consecutive 0 to N list, we can just scan the whole thing without emitting an array. #}
+{% if feature_set.extensions|index_consecutive_0_to_N %}
+    for (i = 0; i < GLAD_ARRAYSIZE(GLAD_{{ feature_set.name|api }}_ext_names); ++i)
+        context->extArray[i] = glad_egl_has_extension(extensions, GLAD_{{ feature_set.name|api }}_ext_names[i]);
 {% else %}
-    GLAD_UNUSED(glad_egl_has_extension);
-{% endfor %}
+    for (i = 0; i < GLAD_ARRAYSIZE(extIdx) - 1; ++i)
+        context->extArray[extIdx[i]] = glad_egl_has_extension(extensions, GLAD_{{ feature_set.name|api }}_ext_names[extIdx[i]]);
+{% endif %}
 
     free(extensions);
 

@@ -38,7 +38,7 @@ static void* glad_gles1_dlopen_handle({{ template_utils.context_arg(def='void') 
 #endif
 
     if ({{ template_utils.handle() }} == NULL) {
-        {{ template_utils.handle() }} = glad_get_dlopen_handle(NAMES, sizeof(NAMES) / sizeof(NAMES[0]));
+        {{ template_utils.handle() }} = glad_get_dlopen_handle(NAMES, GLAD_ARRAYSIZE(NAMES));
     }
 
     return {{ template_utils.handle() }};

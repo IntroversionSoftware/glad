@@ -52,11 +52,14 @@ static void* glad_gles2_dlopen_handle({{ template_utils.context_arg(def='void') 
 #endif
 
 #if GLAD_PLATFORM_EMSCRIPTEN
+{% if options.mx %}
+    GLAD_UNUSED(context);
+{% endif %}
     GLAD_UNUSED(glad_get_dlopen_handle);
     return NULL;
 #else
     if ({{ template_utils.handle('ES2') }} == NULL) {
-        {{ template_utils.handle('ES2') }} = glad_get_dlopen_handle(NAMES, sizeof(NAMES) / sizeof(NAMES[0]));
+        {{ template_utils.handle('ES2') }} = glad_get_dlopen_handle(NAMES, GLAD_ARRAYSIZE(NAMES));
     }
 
     return {{ template_utils.handle('ES2') }};

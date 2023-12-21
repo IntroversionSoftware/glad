@@ -126,15 +126,27 @@ static GLADapiproc glad_vk_get_proc_from_userptr(void *userptr, const char* name
 
 {% for api in feature_set.info.apis %}
 static int glad_vk_find_extensions_{{ api|lower }}({{ template_utils.context_arg(',') }} VkPhysicalDevice physical_device) {
+{% if not feature_set.extensions|index_consecutive_0_to_N %}
+    static uint16_t extIdx[] = {
+{% for extension in feature_set.extensions %}
+        {{ "{:>4}".format(extension.index) }}, /* {{ extension.name }} */
+{% endfor %}
+        0xFFFF
+    };
+{% endif %}
     uint32_t extension_count = 0;
+    uint32_t i;
     char **extensions = NULL;
     if (!glad_vk_get_extensions({{'context, ' if options.mx }}physical_device, &extension_count, &extensions)) return 0;
 
-{% for extension in feature_set.extensions %}
-{% call template_utils.protect(extension) %}
-    {{ ('GLAD_' + extension.name)|ctx(name_only=True) }} = glad_vk_has_extension("{{ extension.name }}", extension_count, extensions);
-{% endcall %}
-{% endfor %}
+{# If the list is a consecutive 0 to N list, we can just scan the whole thing without emitting an array. #}
+{% if feature_set.extensions|index_consecutive_0_to_N %}
+    for (i = 0; i < GLAD_ARRAYSIZE(GLAD_{{ feature_set.name|api }}_ext_names); ++i)
+        context->extArray[i] = glad_vk_has_extension(GLAD_{{ feature_set.name|api }}_ext_names[i], extension_count, extensions);
+{% else %}
+    for (i = 0; i < GLAD_ARRAYSIZE(extIdx) - 1; ++i)
+        context->extArray[extIdx[i]] = glad_vk_has_extension(GLAD_{{ feature_set.name|api }}_ext_names[extIdx[i]], extension_count, extensions);
+{% endif %}
 
     {# Special case: only one extension which is protected -> unused at compile time only on some platforms #}
     GLAD_UNUSED(glad_vk_has_extension);

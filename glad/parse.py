@@ -85,6 +85,18 @@ class FeatureSet(object):
         self.enums = enums
         self.commands = commands
 
+        # We use the index properties of these to figure out the appropriate
+        # offsets into the Context arrays
+        index = 0
+        for command in commands:
+            command.index = index
+            index += 1
+
+        index = 0
+        for extension in extensions:
+            extension.index = index
+            index += 1
+
     def __str__(self):
         return 'FeatureSet(name={self.name}, info={self.info}, extensions={extensions})' \
             .format(self=self, extensions=len(self.extensions))

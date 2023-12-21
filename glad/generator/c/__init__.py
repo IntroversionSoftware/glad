@@ -29,6 +29,11 @@ DebugReturn = namedtuple('_DebugReturn', ['declaration', 'assignment', 'ret'])
 
 Header = namedtuple('_Header', ['name', 'include', 'url'])
 
+def index_consecutive_0_to_N(objects):
+    indices = [obj.index for obj in objects]
+    if len(indices) == 0:
+        return False
+    return all(x == i for i, x in enumerate(indices))
 
 def type_to_c(parsed_type):
     result = ''
@@ -327,7 +332,8 @@ class CGenerator(JinjaGenerator):
             pfn=pfn,
             ctx=ctx,
             no_prefix=jinja2_contextfilter(lambda ctx, value: strip_specification_prefix(value, ctx['spec'])),
-            c_commands=c_commands
+            c_commands=c_commands,
+            index_consecutive_0_to_N=index_consecutive_0_to_N,
         )
 
         self.environment.tests.update(
@@ -359,9 +365,9 @@ class CGenerator(JinjaGenerator):
         args = JinjaGenerator.get_template_arguments(self, spec, feature_set, config)
 
         # TODO allow MX for every specification/api
-        if spec.name not in (EGL.NAME, VK.NAME, GL.NAME):
-            args['options']['mx'] = False
-            args['options']['mx_global'] = False
+        #if spec.name not in (EGL.NAME, VK.NAME, GL.NAME):
+        #    args['options']['mx'] = False
+        #    args['options']['mx_global'] = False
 
         args.update(
             aliases=collect_alias_information(feature_set.commands),

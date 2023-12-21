@@ -64,9 +64,12 @@ extern "C" {
 
 {% block feature_information %}
 {{ template_utils.write_feature_information(chain(feature_set.features, feature_set.extensions), with_runtime=not options.mx and not options.on_demand) }}
-{% endblock %}
 
+{% endblock %}
+{% block beforecommands %}
+{% endblock %}
 {% block commands %}
+
 {{ template_utils.write_function_typedefs(feature_set.commands) }}
 {% if not options.mx %}
 #ifdef __INTELLISENSE__
@@ -78,15 +81,29 @@ extern "C" {
 typedef struct Glad{{ feature_set.name|api }}Context {
     void* userptr;
 
-{% for extension in chain(feature_set.features, feature_set.extensions) %}
-    unsigned {{ extension.name|ctx(member=True) }} : 1;
+{% for extension in feature_set.features %}
+    unsigned char {{ extension.name|ctx(member=True) }};
 {% endfor %}
 
+    union {
+        unsigned char extArray[{{feature_set.extensions|length}}];
+        struct {
+{% for extension in feature_set.extensions %}
+        /* {{ "{:>4}".format(extension.index)}} */ unsigned char {{ extension.name|ctx(member=True) }};
+{% endfor %}
+        };
+    };
+
+    union {
+        void *pfnArray[{{ feature_set.commands|length }}];
+        struct {
 {% for command in feature_set.commands %}
-{% call template_utils.protect(command) %}
-    {{ command.name|pfn }} {{ command.name|ctx(member=True) }};
+{% call template_utils.protect_pfn(command) %}
+        /* {{ "{:>4}".format(command.index) }} */ {{ command.name|pfn }} {{ command.name|ctx(member=True) }};
 {% endcall %}
 {% endfor %}
+        };
+    };
 
 {% if options.loader %}
     void* glad_loader_handle;

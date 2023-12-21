@@ -4,9 +4,9 @@
 {% include 'loader/library.c' %}
 
 
-static const char* DEVICE_FUNCTIONS[] = {
-{% for command in device_commands %}
-    "{{ command.name }}",
+static uint16_t DEVICE_FUNCTIONS[] = {
+{% for command in device_commands|sort(attribute='index') %}
+    {{ "{:>5}".format(command.index) }}, /* {{ command.name }} */
 {% endfor %}
 };
 
@@ -17,10 +17,15 @@ static int glad_vulkan_is_device_function(const char *name) {
      * `vkGetDeviceProcAddr` does not return NULL for non-device functions.
      */
     int i;
-    int length = sizeof(DEVICE_FUNCTIONS) / sizeof(DEVICE_FUNCTIONS[0]);
+    int length = GLAD_ARRAYSIZE(DEVICE_FUNCTIONS);
 
-    for (i=0; i < length; ++i) {
-        if (strcmp(DEVICE_FUNCTIONS[i], name) == 0) {
+    /* TODO: This is a rather expensive search. At time of this writing, there
+     * are 568 device functions. So for every non-device function that gets
+     * checked by this, we have to do 568 distinct string comparisons. */
+    for (i = 0; i < length; ++i) {
+        uint16_t idxDeviceFn = DEVICE_FUNCTIONS[i];
+        const char *pchDeviceFn = GLAD_{{ feature_set.name|api }}_fn_names[idxDeviceFn];
+        if (strcmp(pchDeviceFn, name) == 0) {
             return 1;
         }
     }
@@ -75,7 +80,7 @@ static void* glad_vulkan_dlopen_handle({{ template_utils.context_arg(def='void')
     };
 
     if ({{ template_utils.handle() }} == NULL) {
-        {{ template_utils.handle() }} = glad_get_dlopen_handle(NAMES, sizeof(NAMES) / sizeof(NAMES[0]));
+        {{ template_utils.handle() }} = glad_get_dlopen_handle(NAMES, GLAD_ARRAYSIZE(NAMES));
     }
 
     return {{ template_utils.handle() }};

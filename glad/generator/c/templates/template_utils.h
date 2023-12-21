@@ -27,6 +27,21 @@
 {% endif %}
 {% endmacro %}
 
+
+{% macro protect_pfn(symbol) %}
+{% set protections = spec.protections(symbol, feature_set=feature_set) %}
+{% if protections %}
+#if {{ protections|map('defined')|join(' || ') }}
+{% endif %}
+{{ caller() }}
+{%- if protections %}
+#else
+        /* {{ "{:>4}".format(symbol.index) }} */ void *paddingPfn{{ symbol.index }};
+#endif
+{% endif %}
+{% endmacro %}
+
+
 {% macro write_feature_information(extensions, with_runtime=True) %}
 {% for extension in extensions %}
 {% call protect(extension) %}
