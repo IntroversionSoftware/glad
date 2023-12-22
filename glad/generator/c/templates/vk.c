@@ -130,6 +130,11 @@ static int glad_vk_find_extensions_{{ api|lower }}({{ template_utils.context_arg
     char **extensions = NULL;
     if (!glad_vk_get_extensions({{'context, ' if options.mx }}physical_device, &extension_count, &extensions)) return 0;
 
+{# If the list is a consecutive 0 to N list, we can just scan the whole thing without emitting an array. #}
+{% if feature_set.extensions|index_consecutive_0_to_N %}
+    for (uint32_t i = 0; i < GLAD_ARRAYSIZE(GLAD_{{ feature_set.name|api }}_ext_names); ++i)
+        context->extArray[i] = glad_vk_has_extension(GLAD_{{ feature_set.name|api }}_ext_names[i], extension_count, extensions);
+{% else %}
     static uint16_t extIdx[] = {
 {% for extension in feature_set.extensions %}
         {{ "{:>6}".format(extension.index) }}, // {{ extension.name }}
@@ -138,7 +143,8 @@ static int glad_vk_find_extensions_{{ api|lower }}({{ template_utils.context_arg
     };
 
     for (uint32_t i = 0; i < GLAD_ARRAYSIZE(extIdx) - 1; ++i)
-        context->extArray[extIdx[i]] = glad_vk_has_extension(glad_ext_names[extIdx[i]], extension_count, extensions);
+        context->extArray[extIdx[i]] = glad_vk_has_extension(GLAD_{{ feature_set.name|api }}_ext_names[extIdx[i]], extension_count, extensions);
+{% endif %}
 
     {# Special case: only one extension which is protected -> unused at compile time only on some platforms #}
     GLAD_UNUSED(glad_vk_has_extension);

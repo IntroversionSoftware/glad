@@ -58,6 +58,11 @@ static int glad_egl_find_extensions_{{ api|lower }}({{ template_utils.context_ar
     char *extensions;
     if (!glad_egl_get_extensions({{'context, ' if options.mx }}display, &extensions)) return 0;
 
+{# If the list is a consecutive 0 to N list, we can just scan the whole thing without emitting an array. #}
+{% if feature_set.extensions|index_consecutive_0_to_N %}
+    for (uint32_t i = 0; i < GLAD_ARRAYSIZE(GLAD_{{ feature_set.name|api }}_ext_names); ++i)
+        context->extArray[i] = glad_egl_has_extension(extensions, GLAD_{{ feature_set.name|api }}_ext_names[i]);
+{% else %}
     static uint16_t extIdx[] = {
 {% for extension in feature_set.extensions %}
         {{ "{:>6}".format(extension.index) }}, // {{ extension.name }}
@@ -66,7 +71,8 @@ static int glad_egl_find_extensions_{{ api|lower }}({{ template_utils.context_ar
     };
 
     for (uint32_t i = 0; i < GLAD_ARRAYSIZE(extIdx) - 1; ++i)
-        context->extArray[extIdx[i]] = glad_egl_has_extension(extensions, glad_ext_names[extIdx[i]]);
+        context->extArray[extIdx[i]] = glad_egl_has_extension(extensions, GLAD_{{ feature_set.name|api }}_ext_names[extIdx[i]]);
+{% endif %}
 
     free(extensions);
 

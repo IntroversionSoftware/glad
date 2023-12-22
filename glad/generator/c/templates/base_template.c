@@ -29,7 +29,7 @@ typedef struct {
     uint16_t second;
 } GladAliasPair_t;
 
-static const char *glad_pfn_names[] = {
+static const char *GLAD_{{ feature_set.name|api }}_fn_names[] = {
 {% for command in feature_set.commands %}
 {% call template_utils.protect_name(command) %}
     "{{ command.name }}"{% if not loop.last %},{% endif %} // {{ command.index }}
@@ -37,7 +37,7 @@ static const char *glad_pfn_names[] = {
 {% endfor %}
 };
 
-static const char *glad_ext_names[] = {
+static const char *GLAD_{{ feature_set.name|api }}_ext_names[] = {
 {% for extension in feature_set.extensions %}
     "{{ extension.name }}"{% if not loop.last %},{% endif %} // {{ extension.index }}
 {% endfor %}

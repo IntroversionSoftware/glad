@@ -37,12 +37,6 @@ static GLADapiproc glad_glx_get_proc_from_userptr(void *userptr, const char* nam
 {% for api in feature_set.info.apis %}
 static int glad_glx_find_extensions({{ template_utils.context_arg(', ') }}Display *display, int screen) {
 #ifdef GLX_VERSION_1_1
-    static uint16_t extIdx[] = {
-{% for extension in feature_set.extensions %}
-        {{ "{:>6}".format(extension.index) }}, // {{ extension.name }}
-{% endfor %}
-        0xFFFF
-    };
     const char *extensions;
 
     if ({{'GLAD_glXQueryExtensionsString'|ctx}} == NULL) {
@@ -51,9 +45,23 @@ static int glad_glx_find_extensions({{ template_utils.context_arg(', ') }}Displa
 
     extensions = {{'GLAD_glXQueryExtensionsString'|ctx}}(display, screen);
 
+{# If the list is a consecutive 0 to N list, we can just scan the whole thing without emitting an array. #}
+{% if feature_set.extensions|index_consecutive_0_to_N %}
+    for (uint32_t i = 0; i < GLAD_ARRAYSIZE(GLAD_{{ feature_set.name|api }}_ext_names); ++i)
+        context->extArray[i] = glad_glx_has_extension(extensions, GLAD_{{ feature_set.name|api }}_ext_names[i]);
+{% else %}
+    static uint16_t extIdx[] = {
+{% for extension in feature_set.extensions %}
+        {{ "{:>6}".format(extension.index) }}, // {{ extension.name }}
+{% endfor %}
+        0xFFFF
+    };
+
     for (uint32_t i = 0; i < GLAD_ARRAYSIZE(extIdx) - 1; ++i)
-        context->extArray[extIdx[i]] = glad_glx_has_extension(extensions, glad_ext_names[extIdx[i]]);
+        context->extArray[extIdx[i]] = glad_glx_has_extension(extensions, GLAD_{{ feature_set.name|api }}_ext_names[extIdx[i]]);
+{% endif %}
 #endif
+
     return 1;
 }
 

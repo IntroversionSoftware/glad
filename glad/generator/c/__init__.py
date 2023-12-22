@@ -29,6 +29,9 @@ DebugReturn = namedtuple('_DebugReturn', ['declaration', 'assignment', 'ret'])
 
 Header = namedtuple('_Header', ['name', 'include', 'url'])
 
+def index_consecutive_0_to_N(objects):
+    indices = [obj.index for obj in objects]
+    return all(x == i for i, x in enumerate(indices))
 
 def type_to_c(parsed_type):
     result = ''
@@ -327,7 +330,8 @@ class CGenerator(JinjaGenerator):
             pfn=pfn,
             ctx=ctx,
             no_prefix=jinja2_contextfilter(lambda ctx, value: strip_specification_prefix(value, ctx['spec'])),
-            c_commands=c_commands
+            c_commands=c_commands,
+            index_consecutive_0_to_N=index_consecutive_0_to_N,
         )
 
         self.environment.tests.update(
