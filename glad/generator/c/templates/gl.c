@@ -7,7 +7,7 @@
 #define GLAD_GL_IS_SOME_NEW_VERSION 0
 #endif
 
-static int glad_gl_get_extensions({{ template_utils.context_arg(',') }} int version, const char **out_exts, unsigned int *out_num_exts_i, char ***out_exts_i) {
+static int glad_gl_get_extensions({{ template_utils.context_arg(', ') }}int version, const char **out_exts, unsigned int *out_num_exts_i, char ***out_exts_i) {
 #if GLAD_GL_IS_SOME_NEW_VERSION
     if(GLAD_VERSION_MAJOR(version) < 3) {
 #else
@@ -102,13 +102,13 @@ static GLADapiproc glad_gl_get_proc_from_userptr(void *userptr, const char* name
 }
 
 {% for api in feature_set.info.apis %}
-static int glad_gl_find_extensions_{{ api|lower }}({{ template_utils.context_arg(',') }} int version) {
+static int glad_gl_find_extensions_{{ api|lower }}({{ template_utils.context_arg(', ') }}int version) {
+{% if loadable(feature_set.extensions, api=api)|count > 0 %}
 {% if not loadable(feature_set.extensions, api=api)|index_consecutive_0_to_N %}
     static uint16_t extIdx[] = {
 {% for extension, _ in loadable(feature_set.extensions, api=api) %}
         {{ "{:>4}".format(extension.index) }}, /* {{ extension.name }} */
 {% endfor %}
-        0xFFFF
     };
 {% endif %}
     const char *exts = NULL;
@@ -122,12 +122,22 @@ static int glad_gl_find_extensions_{{ api|lower }}({{ template_utils.context_arg
     for (i = 0; i < GLAD_ARRAYSIZE(GLAD_{{ feature_set.name|api }}_ext_names); ++i)
         context->extArray[i] = glad_gl_has_extension(version, exts, num_exts_i, exts_i, GLAD_{{ feature_set.name|api }}_ext_names[i]);
 {% else %}
-    for (i = 0; i < GLAD_ARRAYSIZE(extIdx) - 1; ++i)
+    for (i = 0; i < GLAD_ARRAYSIZE(extIdx); ++i)
         context->extArray[extIdx[i]] = glad_gl_has_extension(version, exts, num_exts_i, exts_i, GLAD_{{ feature_set.name|api }}_ext_names[extIdx[i]]);
 {% endif %}
 
     glad_gl_free_extensions(exts_i, num_exts_i);
 
+{% else %}
+{%if options.mx %}
+    GLAD_UNUSED(context);
+{% endif %}
+    GLAD_UNUSED(version);
+    GLAD_UNUSED(glad_gl_get_extensions);
+    GLAD_UNUSED(glad_gl_has_extension);
+    GLAD_UNUSED(glad_gl_free_extensions);
+    GLAD_UNUSED(GLAD_{{ feature_set.name|api }}_ext_names);
+{% endif %}
     return 1;
 }
 
@@ -162,7 +172,7 @@ static int glad_gl_find_core_{{ api|lower }}({{ template_utils.context_arg(def='
     return GLAD_MAKE_VERSION(major, minor);
 }
 
-int gladLoad{{ api|api }}{{ 'Context' if options.mx }}UserPtr({{ template_utils.context_arg(',') }} GLADuserptrloadfunc load, void *userptr) {
+int gladLoad{{ api|api }}{{ 'Context' if options.mx }}UserPtr({{ template_utils.context_arg(', ') }}GLADuserptrloadfunc load, void *userptr) {
     int version;
 
     {{ 'glGetString'|ctx }} = (PFNGLGETSTRINGPROC) load(userptr, "glGetString");
@@ -196,8 +206,8 @@ int gladLoad{{ api|api }}UserPtr(GLADuserptrloadfunc load, void *userptr) {
 }
 {% endif %}
 
-int gladLoad{{ api|api }}{{ 'Context' if options.mx }}({{ template_utils.context_arg(',') }} GLADloadfunc load) {
-    return gladLoad{{ api|api }}{{ 'Context' if options.mx }}UserPtr({{'context,' if options.mx }} glad_gl_get_proc_from_userptr, GLAD_GNUC_EXTENSION (void*) load);
+int gladLoad{{ api|api }}{{ 'Context' if options.mx }}({{ template_utils.context_arg(', ') }}GLADloadfunc load) {
+    return gladLoad{{ api|api }}{{ 'Context' if options.mx }}UserPtr({{'context, ' if options.mx }}glad_gl_get_proc_from_userptr, GLAD_GNUC_EXTENSION (void*) load);
 }
 
 {% if options.mx_global %}

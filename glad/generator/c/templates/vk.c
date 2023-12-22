@@ -126,12 +126,12 @@ static GLADapiproc glad_vk_get_proc_from_userptr(void *userptr, const char* name
 
 {% for api in feature_set.info.apis %}
 static int glad_vk_find_extensions_{{ api|lower }}({{ template_utils.context_arg(',') }} VkPhysicalDevice physical_device) {
+{% if feature_set.extensions|length > 0 %}
 {% if not feature_set.extensions|index_consecutive_0_to_N %}
     static uint16_t extIdx[] = {
 {% for extension in feature_set.extensions %}
         {{ "{:>4}".format(extension.index) }}, /* {{ extension.name }} */
 {% endfor %}
-        0xFFFF
     };
 {% endif %}
     uint32_t extension_count = 0;
@@ -144,7 +144,7 @@ static int glad_vk_find_extensions_{{ api|lower }}({{ template_utils.context_arg
     for (i = 0; i < GLAD_ARRAYSIZE(GLAD_{{ feature_set.name|api }}_ext_names); ++i)
         context->extArray[i] = glad_vk_has_extension(GLAD_{{ feature_set.name|api }}_ext_names[i], extension_count, extensions);
 {% else %}
-    for (i = 0; i < GLAD_ARRAYSIZE(extIdx) - 1; ++i)
+    for (i = 0; i < GLAD_ARRAYSIZE(extIdx); ++i)
         context->extArray[extIdx[i]] = glad_vk_has_extension(GLAD_{{ feature_set.name|api }}_ext_names[extIdx[i]], extension_count, extensions);
 {% endif %}
 
@@ -152,7 +152,16 @@ static int glad_vk_find_extensions_{{ api|lower }}({{ template_utils.context_arg
     GLAD_UNUSED(glad_vk_has_extension);
 
     glad_vk_free_extensions(extension_count, extensions);
-
+{% else %}
+{% if options.mx %}
+    GLAD_UNUSED(context);
+{% endif %}
+    GLAD_UNUSED(physical_device);
+    GLAD_UNUSED(glad_vk_get_extensions);
+    GLAD_UNUSED(glad_vk_has_extension);
+    GLAD_UNUSED(glad_vk_free_extensions);
+    GLAD_UNUSED(GLAD_{{ feature_set.name|api }}_ext_names);
+{% endif %}
     return 1;
 }
 

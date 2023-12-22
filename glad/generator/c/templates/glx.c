@@ -36,13 +36,13 @@ static GLADapiproc glad_glx_get_proc_from_userptr(void *userptr, const char* nam
 
 {% for api in feature_set.info.apis %}
 static int glad_glx_find_extensions({{ template_utils.context_arg(', ') }}Display *display, int screen) {
+{% if feature_set.extensions|length > 0 %}
 #ifdef GLX_VERSION_1_1
 {% if not feature_set.extensions|index_consecutive_0_to_N %}
     static uint16_t extIdx[] = {
 {% for extension in feature_set.extensions %}
         {{ "{:>4}".format(extension.index) }}, /* {{ extension.name }} */
 {% endfor %}
-        0xFFFF
     };
 {% endif %}
     const char *extensions;
@@ -59,10 +59,25 @@ static int glad_glx_find_extensions({{ template_utils.context_arg(', ') }}Displa
     for (i = 0; i < GLAD_ARRAYSIZE(GLAD_{{ feature_set.name|api }}_ext_names); ++i)
         context->extArray[i] = glad_glx_has_extension(extensions, GLAD_{{ feature_set.name|api }}_ext_names[i]);
 {% else %}
-    for (i = 0; i < GLAD_ARRAYSIZE(extIdx) - 1; ++i)
+    for (i = 0; i < GLAD_ARRAYSIZE(extIdx); ++i)
         context->extArray[extIdx[i]] = glad_glx_has_extension(extensions, GLAD_{{ feature_set.name|api }}_ext_names[extIdx[i]]);
 {% endif %}
+#else
+{% if options.mx %}
+    GLAD_UNUSED(context);
+{% endif %}
+    GLAD_UNUSED(display);
+    GLAD_UNUSED(screen);
+    GLAD_UNUSED(GLAD_{{ feature_set.name|api }}_ext_names);
 #endif
+{% else %}
+{% if options.mx %}
+    GLAD_UNUSED(context);
+{% endif %}
+    GLAD_UNUSED(display);
+    GLAD_UNUSED(screen);
+    GLAD_UNUSED(GLAD_{{ feature_set.name|api }}_ext_names);
+{% endif %}
 
     return 1;
 }

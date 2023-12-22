@@ -29,6 +29,9 @@ DebugReturn = namedtuple('_DebugReturn', ['declaration', 'assignment', 'ret'])
 
 Header = namedtuple('_Header', ['name', 'include', 'url'])
 
+def count(objects):
+    return len(list(objects))
+
 def index_consecutive_0_to_N(objects):
     indices = [obj.index for obj in objects]
     if len(indices) == 0:
@@ -293,6 +296,7 @@ class CGenerator(JinjaGenerator):
             no_prefix=jinja2_contextfilter(lambda ctx, value: strip_specification_prefix(value, ctx['spec'])),
             c_commands=c_commands,
             index_consecutive_0_to_N=index_consecutive_0_to_N,
+            count=count,
         )
 
         self.environment.tests.update(

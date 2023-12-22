@@ -35,12 +35,12 @@ static GLADapiproc glad_wgl_get_proc_from_userptr(void *userptr, const char* nam
 
 {% for api in feature_set.info.apis %}
 static int glad_wgl_find_extensions_{{ api|lower }}({{ template_utils.context_arg(', ') }}HDC hdc) {
+{% if feature_set.extensions|length > 0 %}
 {% if not feature_set.extensions|index_consecutive_0_to_N %}
     static uint16_t extIdx[] = {
 {% for extension in feature_set.extensions %}
         {{ "{:>4}".format(extension.index) }}, /* {{ extension.name }} */
 {% endfor %}
-        0xFFFF
     };
 {% endif %}
     const char *extensions;
@@ -59,10 +59,11 @@ static int glad_wgl_find_extensions_{{ api|lower }}({{ template_utils.context_ar
     for (i = 0; i < GLAD_ARRAYSIZE(GLAD_{{ feature_set.name|api }}_ext_names); ++i)
         context->extArray[i] = glad_wgl_has_extension(extensions, GLAD_{{ feature_set.name|api }}_ext_names[i]);
 {% else %}
-    for (i = 0; i < GLAD_ARRAYSIZE(extIdx) - 1; ++i)
+    for (i = 0; i < GLAD_ARRAYSIZE(extIdx); ++i)
         context->extArray[extIdx[i]] = glad_wgl_has_extension(extensions, GLAD_{{ feature_set.name|api }}_ext_names[extIdx[i]]);
 {% endif %}
 
+{% endif %}
     return 1;
 }
 
