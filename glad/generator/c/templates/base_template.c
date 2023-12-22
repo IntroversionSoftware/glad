@@ -48,41 +48,13 @@ static const char *GLAD_{{ feature_set.name|api }}_ext_names[] = {
 {% endif %}
 {% endblock %}
 {% block extensions %}
-{% if not options.mx and not options.on_demand %}
+{% if not options.mx %}
 
 {% for extension in chain(feature_set.features, feature_set.extensions) %}
 {% call template_utils.protect(extension) %}
 int GLAD_{{ extension.name }} = 0;
 {% endcall %}
 {% endfor %}
-{% endif %}
-{% endblock %}
-{% block on_demand %}
-{% if options.on_demand %}
-
-{% for api in feature_set.info.apis %}
-{% if options.loader %}
-static GLADapiproc glad_{{ api }}_internal_loader_get_proc(const char *name);
-static GLADloadfunc glad_global_on_demand_{{ api }}_loader_func = glad_{{ api }}_internal_loader_get_proc;
-{% else %}
-static GLADloadfunc glad_global_on_demand_{{ api }}_loader_func = NULL;
-{% endif %}
-
-void gladSet{{ api|api }}OnDemandLoader(GLADloadfunc loader) {
-    glad_global_on_demand_{{ api }}_loader_func = loader;
-}
-{% endfor %}
-
-static GLADapiproc glad_{{ spec.name }}_on_demand_loader(const char *name) {
-    GLADapiproc result = NULL;
-    {% for api in feature_set.info.apis %}
-    if (result == NULL && glad_global_on_demand_{{ api }}_loader_func != NULL) {
-        result = glad_global_on_demand_{{ api }}_loader_func(name);
-    }
-    {% endfor %}
-    /* this provokes a segmentation fault if there was no loader or no loader returned something useful */
-    return result;
-}
 {% endif %}
 {% endblock %}
 {% block debug %}
@@ -119,19 +91,7 @@ void gladSet{{ feature_set.name|api }}PostCallback(GLADpostcallback cb) {
 {% block commands %}
 {% for command in feature_set.commands|c_commands %}
 {% call template_utils.protect(command) %}
-{% if options.on_demand %}
-static {{ command.proto.ret|type_to_c }} GLAD_API_PTR glad_on_demand_impl_{{ command.name }}({{ command.params|params_to_c }}) {
-    glad_{{ command.name }} = ({{ command.name|pfn }}) glad_{{ spec.name }}_on_demand_loader("{{ command.name }}");
-{% if command.proto.ret is void %}
-    glad_{{ command.name }}({{ command.params|param_names }});
-{% else %}
-    return glad_{{ command.name }}({{ command.params|param_names }});
-{% endif %}
-}
-{{ command.name|pfn }} glad_{{ command.name }} = glad_on_demand_impl_{{ command.name }};
-{% else %}
 {{ command.name|pfn }} glad_{{ command.name }} = NULL;
-{% endif %}
 {% if options.debug %}
 {% set impl = get_debug_impl(command, command.name|ctx(context=global_context)) %}
 static {{ command.proto.ret|type_to_c }} GLAD_API_PTR glad_debug_impl_{{ command.name }}({{ impl.impl }}) {
@@ -146,7 +106,6 @@ static {{ command.proto.ret|type_to_c }} GLAD_API_PTR glad_debug_impl_{{ command
 {% endfor %}
 {% endblock %}
 {% endif %}
-{% if not options.on_demand %}
 
 {% block extension_loaders %}
 {% for extension, commands in loadable() %}
@@ -205,7 +164,6 @@ static void glad_{{ spec.name }}_resolve_aliases({{ template_utils.context_arg(d
 
 {% block loader %}
 {% endblock %}
-{% endif %} {# options.on_demand #}
 
 {% if options.debug %}
 void gladInstall{{ feature_set.name|api }}Debug() {

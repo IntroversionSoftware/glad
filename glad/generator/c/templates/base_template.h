@@ -63,7 +63,7 @@ extern "C" {
 {% endblock %}
 
 {% block feature_information %}
-{{ template_utils.write_feature_information(chain(feature_set.features, feature_set.extensions), with_runtime=not options.mx and not options.on_demand) }}
+{{ template_utils.write_feature_information(chain(feature_set.features, feature_set.extensions), with_runtime=not options.mx) }}
 
 {% endblock %}
 {% block beforecommands %}
@@ -130,12 +130,6 @@ GLAD_API_CALL Glad{{ feature_set.name|api }}Context glad_{{ feature_set.name }}_
 {% endblock %}
 
 {% block declarations %}
-{% if options.on_demand %}
-{% for api in feature_set.info.apis %}
-GLAD_API_CALL void gladSet{{ api|api }}OnDemandLoader(GLADloadfunc loader);
-{% endfor %}
-{% endif %}
-
 {% if options.mx_global %}
 GLAD_API_CALL Glad{{ feature_set.name|api }}Context* gladGet{{ feature_set.name|api }}Context(void);
 GLAD_API_CALL void gladSet{{ feature_set.name|api }}Context(Glad{{ feature_set.name|api }}Context *context);
@@ -150,10 +144,8 @@ GLAD_API_CALL void gladUninstall{{ feature_set.name|api }}Debug(void);
 {% endif %}
 {% endblock %}
 
-{% if not options.on_demand %}
 {% block custom_declarations %}
 {% endblock %}
-{% endif %}
 
 {% if options.loader %}
 {% block loader_impl %}

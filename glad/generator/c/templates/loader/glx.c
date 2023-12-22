@@ -26,7 +26,6 @@ static void* glad_glx_dlopen_handle(void) {
     return _glx_handle;
 }
 
-{% if not options.on_demand %}
 int gladLoaderLoadGLX(Display *display, int screen) {
     int version = 0;
     void *handle = NULL;
@@ -48,26 +47,11 @@ int gladLoaderLoadGLX(Display *display, int screen) {
 
     return version;
 }
-{% endif %}
-
-{% if options.on_demand %}
-static GLADglxprocaddrfunc glad_glx_internal_loader_global_userptr = NULL;
-static GLADapiproc glad_glx_internal_loader_get_proc(const char *name) {
-    if (glad_glx_internal_loader_global_userptr == NULL) {
-        glad_glx_internal_loader_global_userptr = (GLADglxprocaddrfunc) glad_dlsym_handle(glad_glx_dlopen_handle(), "glXGetProcAddressARB");
-    }
-
-    return glad_glx_get_proc(GLAD_GNUC_EXTENSION (void *) glad_glx_internal_loader_global_userptr, name);
-}
-{% endif %}
 
 void gladLoaderUnloadGLX() {
     if (_glx_handle != NULL) {
         glad_close_dlopen_handle(_glx_handle);
         _glx_handle = NULL;
-{% if options.on_demand %}
-        glad_glx_internal_loader_global_userptr = NULL;
-{% endif %}
     }
 }
 
@@ -81,7 +65,6 @@ void gladLoaderResetGLX{{ 'Context' if options.mx }}({{ template_utils.context_a
 {% if options.mx %}
     memset(context, 0, sizeof(GladGLXContext));
 {% else %}
-{% if not options.on_demand %}
 {% for feature in feature_set.features %}
     GLAD_{{ feature.name }} = 0;
 {% endfor %}
@@ -89,7 +72,6 @@ void gladLoaderResetGLX{{ 'Context' if options.mx }}({{ template_utils.context_a
 {% for extension in feature_set.extensions %}
     GLAD_{{ extension.name }} = 0;
 {% endfor %}
-{% endif %}
 
 {% for extension, commands in loadable() %}
 {% for command in commands %}

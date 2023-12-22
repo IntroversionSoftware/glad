@@ -239,17 +239,11 @@ class CConfig(Config):
         default=False,
         description='Include internal loaders for APIs'
     )
-    ON_DEMAND = ConfigOption(
-        converter=bool,
-        default=False,
-        description='On-demand function pointer loading, initialize on use (experimental)'
-    )
 
     __constraints__ = [
         RequirementConstraint(['MX_GLOBAL'], 'MX'),
         UnsupportedConstraint(['MX'], 'DEBUG'),
         # RequirementConstraint(['MX', 'DEBUG'], 'MX_GLOBAL')
-        UnsupportedConstraint(['MX'], 'ON_DEMAND')
     ]
 
 

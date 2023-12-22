@@ -96,7 +96,6 @@ static struct _glad_vulkan_userptr glad_vulkan_build_userptr(void *handle, VkIns
     return userptr;
 }
 
-{% if not options.on_demand %}
 int gladLoaderLoadVulkan{{ 'Context' if options.mx }}({{ template_utils.context_arg(',') }} VkInstance instance, VkPhysicalDevice physical_device, VkDevice device) {
     int version = 0;
     void *handle = NULL;
@@ -119,13 +118,11 @@ int gladLoaderLoadVulkan{{ 'Context' if options.mx }}({{ template_utils.context_
 
     return version;
 }
-{% endif %}
 
 void gladLoaderResetVulkan{{ 'Context' if options.mx }}({{ template_utils.context_arg(def='void') }}) {
 {% if options.mx %}
     memset(context, 0, sizeof(GladVulkanContext));
 {% else %}
-{% if not options.on_demand %}
 {% for feature in feature_set.features %}
     {{ ('GLAD_' + feature.name)|ctx(name_only=True) }} = 0;
 {% endfor %}
@@ -135,7 +132,6 @@ void gladLoaderResetVulkan{{ 'Context' if options.mx }}({{ template_utils.contex
     {{ ('GLAD_' + extension.name)|ctx(name_only=True) }} = 0;
 {% endcall %}
 {% endfor %}
-{% endif %}
 
 {% for extension, commands in loadable() %}
 {% for command in commands %}
@@ -153,26 +149,6 @@ void gladLoaderResetVulkan(void) {
 }
 {% endif %}
 
-{% if options.on_demand %}
-{% call template_utils.zero_initialized() %}static struct _glad_vulkan_userptr glad_vulkan_internal_loader_global_userptr{% endcall %}
-
-void gladLoaderSetVulkanInstance(VkInstance instance) {
-    glad_vulkan_internal_loader_global_userptr.vk_instance = instance;
-}
-
-void gladLoaderSetVulkanDevice(VkDevice device) {
-    glad_vulkan_internal_loader_global_userptr.vk_device = device;
-}
-
-static GLADapiproc glad_vulkan_internal_loader_get_proc(const char *name) {
-    if (glad_vulkan_internal_loader_global_userptr.vk_handle == NULL) {
-        glad_vulkan_internal_loader_global_userptr = glad_vulkan_build_userptr(glad_vulkan_dlopen_handle(), NULL, NULL);
-    }
-
-    return glad_vulkan_get_proc((void *) &glad_vulkan_internal_loader_global_userptr, name);
-}
-{% endif %}
-
 {% if options.mx_global %}
 int gladLoaderLoadVulkan(VkInstance instance, VkPhysicalDevice physical_device, VkDevice device) {
     return gladLoaderLoadVulkanContext(gladGetVulkanContext(), instance, physical_device, device);
@@ -183,9 +159,6 @@ void gladLoaderUnloadVulkan{{ 'Context' if options.mx }}({{ template_utils.conte
     if ({{ template_utils.handle() }} != NULL) {
         glad_close_dlopen_handle({{ template_utils.handle() }});
         {{ template_utils.handle() }} = NULL;
-{% if options.on_demand %}
-        glad_vulkan_internal_loader_global_userptr.vk_handle = NULL;
-{% endif %}
     }
 
 {% if not options.mx %}

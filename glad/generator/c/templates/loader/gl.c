@@ -71,7 +71,6 @@ static struct _glad_gl_userptr glad_gl_build_userptr(void *handle) {
     return userptr;
 }
 
-{% if not options.on_demand %}
 int gladLoaderLoadGL{{ 'Context' if options.mx }}({{ template_utils.context_arg(def='void') }}) {
     int version = 0;
     void *handle;
@@ -92,13 +91,11 @@ int gladLoaderLoadGL{{ 'Context' if options.mx }}({{ template_utils.context_arg(
 
     return version;
 }
-{% endif %}
 
 void gladLoaderResetGL{{ 'Context' if options.mx }}({{ template_utils.context_arg(def='void') }}) {
 {% if options.mx %}
     memset(context, 0, sizeof(GladGLContext));
 {% else %}
-{% if not options.on_demand %}
 {% for feature in feature_set.features %}
     {{ ('GLAD_' + feature.name)|ctx(name_only=True) }} = 0;
 {% endfor %}
@@ -106,7 +103,6 @@ void gladLoaderResetGL{{ 'Context' if options.mx }}({{ template_utils.context_ar
 {% for extension in feature_set.extensions %}
     {{ ('GLAD_' + extension.name)|ctx(name_only=True) }} = 0;
 {% endfor %}
-{% endif %}
 
 {% for extension, commands in loadable() %}
 {% for command in commands %}
@@ -122,17 +118,6 @@ void gladLoaderResetGL(void) {
 }
 {% endif %}
 
-{% if options.on_demand %}
-{% call template_utils.zero_initialized() %}static struct _glad_gl_userptr glad_gl_internal_loader_global_userptr{% endcall %}
-static GLADapiproc glad_gl_internal_loader_get_proc(const char *name) {
-    if (glad_gl_internal_loader_global_userptr.handle == NULL) {
-        glad_gl_internal_loader_global_userptr = glad_gl_build_userptr(glad_gl_dlopen_handle());
-    }
-
-    return glad_gl_get_proc((void *) &glad_gl_internal_loader_global_userptr, name);
-}
-{% endif %}
-
 {% if options.mx_global %}
 int gladLoaderLoadGL(void) {
     return gladLoaderLoadGLContext(gladGet{{ feature_set.name|api }}Context());
@@ -143,9 +128,6 @@ void gladLoaderUnloadGL{{ 'Context' if options.mx }}({{ template_utils.context_a
     if ({{ template_utils.handle() }} != NULL) {
         glad_close_dlopen_handle({{ template_utils.handle() }});
         {{ template_utils.handle() }} = NULL;
-{% if options.on_demand %}
-        glad_gl_internal_loader_global_userptr.handle = NULL;
-{% endif %}
     }
 
 {% if not options.mx %}

@@ -78,7 +78,6 @@ static struct _glad_gles2_userptr glad_gles2_build_userptr(void *handle) {
     return userptr;
 }
 
-{% if not options.on_demand %}
 int gladLoaderLoadGLES2{{ 'Context' if options.mx }}({{ template_utils.context_arg(def='void') }}) {
     int version = 0;
     void *handle = NULL;
@@ -112,13 +111,11 @@ int gladLoaderLoadGLES2{{ 'Context' if options.mx }}({{ template_utils.context_a
 
     return version;
 }
-{% endif %}
 
 void gladLoaderResetGLES2{{ 'Context' if options.mx }}({{ template_utils.context_arg(def='void') }}) {
 {% if options.mx %}
     memset(context, 0, sizeof(Glad{{ feature_set.name|api }}Context));
 {% else %}
-{% if not options.on_demand %}
 {% for feature in feature_set.features %}
     {{ ('GLAD_' + feature.name)|ctx(name_only=True) }} = 0;
 {% endfor %}
@@ -126,7 +123,6 @@ void gladLoaderResetGLES2{{ 'Context' if options.mx }}({{ template_utils.context
 {% for extension in feature_set.extensions %}
     {{ ('GLAD_' + extension.name)|ctx(name_only=True) }} = 0;
 {% endfor %}
-{% endif %}
 
 {% for extension, commands in loadable() %}
 {% for command in commands %}
@@ -142,17 +138,6 @@ void gladLoaderResetGLES2(void) {
 }
 {% endif %}
 
-{% if options.on_demand %}
-{% call template_utils.zero_initialized() %}static struct _glad_gles2_userptr glad_gles2_internal_loader_global_userptr{% endcall %}
-static GLADapiproc glad_gles2_internal_loader_get_proc(const char *name) {
-    if (glad_gles2_internal_loader_global_userptr.get_proc_address_ptr == NULL) {
-        glad_gles2_internal_loader_global_userptr = glad_gles2_build_userptr(glad_gles2_dlopen_handle());
-    }
-
-    return glad_gles2_get_proc((void *) &glad_gles2_internal_loader_global_userptr, name);
-}
-{% endif %}
-
 {% if options.mx_global %}
 int gladLoaderLoadGLES2(void) {
     return gladLoaderLoadGLES2Context(gladGet{{ feature_set.name|api }}Context());
@@ -163,9 +148,6 @@ void gladLoaderUnloadGLES2{{ 'Context' if options.mx }}({{ template_utils.contex
     if ({{ template_utils.handle('ES2') }} != NULL) {
         glad_close_dlopen_handle({{ template_utils.handle('ES2') }});
         {{ template_utils.handle('ES2') }} = NULL;
-{% if options.on_demand %}
-        glad_gles2_internal_loader_global_userptr.get_proc_address_ptr = NULL;
-{% endif %}
     }
 
 {% if not options.mx %}
