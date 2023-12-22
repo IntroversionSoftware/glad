@@ -201,3 +201,10 @@ def expand_type_name(name):
         prefix = upper_name.rsplit(suffix, 1)[0]
 
     return ExpandedName(prefix, suffix)
+
+def fnv1a_hash(s):
+    hash = 0x811c9dc5
+    for byte in s.encode('utf-8'):
+        hash = (hash * 0x01000193) % (2**32)
+        hash = hash ^ byte
+    return hash

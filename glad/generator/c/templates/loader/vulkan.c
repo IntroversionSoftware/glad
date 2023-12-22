@@ -3,12 +3,48 @@
 
 {% include 'loader/library.c' %}
 
+typedef struct {
+    uint32_t hash;
+    uint16_t index;
+} GladHashIndexPair_t;
 
-static const char* DEVICE_FUNCTIONS[] = {
-{% for command in device_commands %}
-    "{{ command.name }}",
+/* This is implemented as an array of sorted FNV-1a hashed string values, for
+ * more efficient searching. */
+static const GladHashIndexPair_t DEVICE_FUNCTIONS[] = {
+{% for command in device_commands|sort(attribute=('hash')) %}
+    { {{ '0x{:08x}'.format(command.hash) }}, {{ "{:>5}".format(command.index) }} }, /* {{ command.name }} */
 {% endfor %}
 };
+
+static uint32_t fnv1a_hash(const char *str) {
+    uint32_t hash = 0x811c9dc5;
+    while (*str) {
+        hash *= 0x01000193;
+        hash ^= (uint32_t)*str++;
+    }
+    return hash;
+}
+
+static int32_t glad_vulkan_device_function_search(const GladHashIndexPair_t *arr, uint32_t size, uint32_t target) {
+    int32_t left = 0;
+    int32_t right = size - 1;
+
+    while (left <= right) {
+        int mid = left + (right - left) / 2;
+
+        if (arr[mid].hash == target) {
+            return mid; // Element found, return its index
+        }
+
+        if (arr[mid].hash < target) {
+            left = mid + 1; // Search in the right half
+        } else {
+            right = mid - 1; // Search in the left half
+        }
+    }
+
+    return -1; // Element not found
+}
 
 static int glad_vulkan_is_device_function(const char *name) {
     /* Exists as a workaround for:
@@ -16,13 +52,21 @@ static int glad_vulkan_is_device_function(const char *name) {
      *
      * `vkGetDeviceProcAddr` does not return NULL for non-device functions.
      */
-    int i;
-    int length = GLAD_ARRAYSIZE(DEVICE_FUNCTIONS);
+    const uint32_t length = GLAD_ARRAYSIZE(DEVICE_FUNCTIONS);
+    const uint32_t hash = fnv1a_hash(name);
 
-    for (i=0; i < length; ++i) {
-        if (strcmp(DEVICE_FUNCTIONS[i], name) == 0) {
-            return 1;
-        }
+    int32_t matchIdx = glad_vulkan_device_function_search(DEVICE_FUNCTIONS, length, hash);
+
+    if (matchIdx < 0)
+        return 0;
+
+    const GladHashIndexPair_t *match = &DEVICE_FUNCTIONS[matchIdx];
+
+    if (strcmp(name, GLAD_{{ feature_set.name|api }}_fn_names[match->index]) == 0) {
+        return 1;
+    } else {
+        /* Hash collision. This is unexpected, and the loader needs to be modified to compensate. */
+        abort();
     }
 
     return 0;

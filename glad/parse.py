@@ -29,7 +29,7 @@ from contextlib import closing
 from itertools import chain
 
 from glad.opener import URLOpener
-from glad.util import Version, topological_sort, memoize
+from glad.util import Version, topological_sort, memoize, fnv1a_hash
 import glad.util
 
 logger = logging.getLogger(__name__)
@@ -90,6 +90,7 @@ class FeatureSet(object):
         index = 0
         for command in commands:
             command.index = index
+            command.hash = fnv1a_hash(command.name)
             index += 1
 
         index = 0
