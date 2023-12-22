@@ -84,33 +84,6 @@ def is_void(t):
     return type_to_c(t).lower() == 'void'
 
 
-def get_debug_impl(command, command_code_name=None):
-    command_code_name = command_code_name or command.name
-
-    impl = params_to_c(command.params)
-    func = param_names(command.params)
-
-    pre_callback = ', '.join(filter(None, [
-        '"{}"'.format(command.name),
-        '(GLADapiproc) {}'.format(command_code_name),
-        str(len(command.params)),
-        func
-    ]))
-
-    is_void_ret = is_void(command.proto.ret)
-
-    post_callback = ('NULL, ' if is_void_ret else '(void*) &ret, ') + pre_callback
-
-    ret = DebugReturn('', '', '')
-    if not is_void_ret:
-        ret = DebugReturn(
-            '{} ret;\n    '.format(type_to_c(command.proto.ret)),
-            'ret = ',
-            'return ret;'
-        )
-
-    return DebugArguments(impl, func, pre_callback, post_callback, ret)
-
 
 @jinja2_contextfilter
 def ctx(jinja_context, name, context='context', raw=False, name_only=False, member=False):
@@ -209,11 +182,6 @@ def replace_cpp_style_comments(inp):
 
 
 class CConfig(Config):
-    DEBUG = ConfigOption(
-        converter=bool,
-        default=False,
-        description='Enables generation of a debug build'
-    )
     ALIAS = ConfigOption(
         converter=bool,
         default=False,
@@ -242,8 +210,6 @@ class CConfig(Config):
 
     __constraints__ = [
         RequirementConstraint(['MX_GLOBAL'], 'MX'),
-        UnsupportedConstraint(['MX'], 'DEBUG'),
-        # RequirementConstraint(['MX', 'DEBUG'], 'MX_GLOBAL')
     ]
 
 
@@ -312,7 +278,6 @@ class CGenerator(JinjaGenerator):
         self._headers = dict()
 
         self.environment.globals.update(
-            get_debug_impl=get_debug_impl,
             loadable=loadable,
             enum_member=enum_member,
             chain=itertools.chain

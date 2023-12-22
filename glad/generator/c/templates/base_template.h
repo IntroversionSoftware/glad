@@ -75,7 +75,7 @@ extern "C" {
 #ifdef __INTELLISENSE__
 {{ template_utils.write_function_definitions(feature_set.commands) }}
 #else
-{{ template_utils.write_function_declarations(feature_set.commands, debug=options.debug) }}
+{{ template_utils.write_function_declarations(feature_set.commands) }}
 #endif
 {% else %}
 typedef struct Glad{{ feature_set.name|api }}Context {
@@ -135,13 +135,6 @@ GLAD_API_CALL Glad{{ feature_set.name|api }}Context* gladGet{{ feature_set.name|
 GLAD_API_CALL void gladSet{{ feature_set.name|api }}Context(Glad{{ feature_set.name|api }}Context *context);
 {% endif %}
 
-{% if options.debug %}
-GLAD_API_CALL void gladSet{{ feature_set.name|api }}PreCallback(GLADprecallback cb);
-GLAD_API_CALL void gladSet{{ feature_set.name|api }}PostCallback(GLADpostcallback cb);
-
-GLAD_API_CALL void gladInstall{{ feature_set.name|api }}Debug(void);
-GLAD_API_CALL void gladUninstall{{ feature_set.name|api }}Debug(void);
-{% endif %}
 {% endblock %}
 
 {% block custom_declarations %}

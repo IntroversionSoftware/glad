@@ -57,51 +57,12 @@ int GLAD_{{ extension.name }} = 0;
 {% endfor %}
 {% endif %}
 {% endblock %}
-{% block debug %}
-{% if options.debug %}
-
-{% block debug_default_pre %}
-static void _pre_call_{{ feature_set.name }}_callback_default(const char *name, GLADapiproc apiproc, int len_args, ...) {
-    GLAD_UNUSED(name);
-    GLAD_UNUSED(apiproc);
-    GLAD_UNUSED(len_args);
-}
-{% endblock %}
-{% block debug_default_post %}
-static void _post_call_{{ feature_set.name }}_callback_default(void *ret, const char *name, GLADapiproc apiproc, int len_args, ...) {
-    GLAD_UNUSED(ret);
-    GLAD_UNUSED(name);
-    GLAD_UNUSED(apiproc);
-    GLAD_UNUSED(len_args);
-}
-{% endblock %}
-
-static GLADprecallback _pre_call_{{ feature_set.name }}_callback = _pre_call_{{ feature_set.name }}_callback_default;
-void gladSet{{ feature_set.name|api }}PreCallback(GLADprecallback cb) {
-    _pre_call_{{ feature_set.name }}_callback = cb;
-}
-static GLADpostcallback _post_call_{{ feature_set.name }}_callback = _post_call_{{ feature_set.name }}_callback_default;
-void gladSet{{ feature_set.name|api }}PostCallback(GLADpostcallback cb) {
-    _post_call_{{ feature_set.name }}_callback = cb;
-}
-{% endif %}
-{% endblock %}
 {% if not options.mx %}
 
 {% block commands %}
 {% for command in feature_set.commands|c_commands %}
 {% call template_utils.protect(command) %}
 {{ command.name|pfn }} glad_{{ command.name }} = NULL;
-{% if options.debug %}
-{% set impl = get_debug_impl(command, command.name|ctx(context=global_context)) %}
-static {{ command.proto.ret|type_to_c }} GLAD_API_PTR glad_debug_impl_{{ command.name }}({{ impl.impl }}) {
-    {{ impl.ret.declaration }}_pre_call_{{ feature_set.name }}_callback({{ impl.pre_callback }});
-    {{ impl.ret.assignment }}{{ command.name|ctx(context=global_context) }}({{ impl.function }});
-    _post_call_{{ feature_set.name }}_callback({{ impl.post_callback }});
-    {{ impl.ret.ret }}
-}
-{{ command.name|pfn }} glad_debug_{{ command.name }} = glad_debug_impl_{{ command.name }};
-{% endif %}
 {% endcall %}
 {% endfor %}
 {% endblock %}
@@ -164,24 +125,6 @@ static void glad_{{ spec.name }}_resolve_aliases({{ template_utils.context_arg(d
 
 {% block loader %}
 {% endblock %}
-
-{% if options.debug %}
-void gladInstall{{ feature_set.name|api }}Debug() {
-{% for command in feature_set.commands|c_commands %}
-{% call template_utils.protect(command) %}
-    glad_debug_{{ command.name }} = glad_debug_impl_{{ command.name }};
-{% endcall %}
-{% endfor %}
-}
-
-void gladUninstall{{ feature_set.name|api }}Debug() {
-{% for command in feature_set.commands|c_commands %}
-{% call template_utils.protect(command) %}
-    glad_debug_{{ command.name }} = glad_{{ command.name }};
-{% endcall %}
-{% endfor %}
-}
-{% endif %}
 
 {% if options.loader %}
 {% block loader_impl %}

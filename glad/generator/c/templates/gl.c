@@ -1,40 +1,5 @@
 {% extends 'base_template.c' %}
 
-
-{% block debug_default_pre %}
-static void _pre_call_{{ feature_set.name }}_callback_default(const char *name, GLADapiproc apiproc, int len_args, ...) {
-    GLAD_UNUSED(len_args);
-
-    if (apiproc == NULL) {
-        fprintf(stderr, "GLAD: ERROR %s is NULL!\n", name);
-        return;
-    }
-    if (glad_glGetError == NULL) {
-        fprintf(stderr, "GLAD: ERROR glGetError is NULL!\n");
-        return;
-    }
-
-    (void) glad_glGetError();
-}
-{% endblock %}
-
-{% block debug_default_post %}
-static void _post_call_{{ feature_set.name }}_callback_default(void *ret, const char *name, GLADapiproc apiproc, int len_args, ...) {
-    GLenum error_code;
-
-    GLAD_UNUSED(ret);
-    GLAD_UNUSED(apiproc);
-    GLAD_UNUSED(len_args);
-
-    error_code = glad_glGetError();
-
-    if (error_code != GL_NO_ERROR) {
-        fprintf(stderr, "GLAD: ERROR %d in %s!\n", error_code, name);
-    }
-}
-{% endblock %}
-
-
 {% block loader %}
 #if defined(GL_ES_VERSION_3_0) || defined(GL_VERSION_3_0)
 #define GLAD_GL_IS_SOME_NEW_VERSION 1
